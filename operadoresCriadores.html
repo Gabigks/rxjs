@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="https://unpkg.com/@reactivex/rxjs@6.3.3/dist/global/rxjs.umd.js"></script>
+  <title>Document</title>
+</head>
+<body>
+
+  <button>Click</button>
+    
+  <script>
+    const { of, from, interval, range, generate, fromEvent, defer, bindCallback, bindNodeCallback } = rxjs;
+    const { take } = rxjs.operators;
+
+    //Generator infinito
+    function* g() {
+      let i = 1;
+      while(true) {
+        yield i++;
+      }
+    }
+
+    //Passa parametros na criação
+    of(1, true, 'string', [1,2,3]) //Um array sera transmitido o array e nao cada valor dele
+      .subscribe(
+        v => console.log(v)
+      );
+
+    //Recebe estruturas de dados e as transforma em observables, por ex: um array sera transmitido cada valor desse array
+    //Qualquer estrutura que estende o tipo iterator pode ser aplicada no from
+    from(g()) //Converte uma Promise em um observable tambem
+      .pipe(
+        take(10) //Faz parar apos gerar 10 elementos
+      )
+      .subscribe(
+        v => console.log(v)
+      );
+
+    // from([1,2,3])
+    // from(Promise.resolve(1))
+    // from(of(0, 1, 2, 3)) //Inclusive pode receber alguns outros observables
+
+    //Emite um valor a cada n ms
+    interval(1000)
+      .pipe(
+        take(10)
+      )
+      .subscribe(
+        v => console.log(v)
+      )
+    
+    //Emite 10 valores a partir de 1000
+    range(1000, 10)
+      .subscribe(
+        v => console.log(v)
+      )
+
+    //Similar a um for soq em forma de funcoes
+    //Valor inicial // Function com uma condicao de parada // e uma function de incremento, Obs: Deve ser feito de uma forma imutavel x+1 e nao x++
+    generate(0, x => x < 10, x => x + 1)
+      .subscribe(
+        v => console.log(v)
+      )
+
+    const button = document.querySelector('button');
+
+    //primeiro o elemento e segundo a funcao que deseja aplicar
+    fromEvent(button, 'click')
+      .subscribe(
+        v => console.log(v) //Nesse caso o proprio evento sera transmitido
+      )
+    
+    //Encapsula um funcao que so eh executada a partir do momento que tenho um subscribe
+    const a = (a) => defer(() => { 
+      return a > 10 ? of(1) : of(2); //Podemos ter um observable condicional
+    })
+
+    a(11)
+      .subscribe(
+        v => console.log(v)
+      )
+
+    //Funcao que retorna callback
+    const b = (b, cb) => {
+      cb(b)
+    }
+
+    //A partir do momento que o callback é executado ele cai no subscribe a partir de um observable
+    //Util para reutilizar funcoes
+    bindCallback(b)(10)
+      .subscribe(
+        v => console.log(v)
+      )
+
+    //Funcao que retorna um node callback
+    const c = (c, cb) => {
+      // cb(new Error('KJSDASL'), c)
+      cb(undefined, c);
+    }
+
+    //A partir do momento que o callback é executado ele cai no subscribe a partir de um observable
+    //Util para reutilizar funcoes
+    bindNodeCallback(c)(10)
+      .subscribe(
+        v => console.log(v),
+        err => console.log(err) //É acionado quando o primeiro parametro for passado, se for undefined ai tem a emissao sem erro
+      )
+
+  </script>
+
+</body>
+</html>
