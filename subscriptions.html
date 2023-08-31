@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="https://unpkg.com/@reactivex/rxjs@6.3.3/dist/global/rxjs.umd.js"></script>
+  <title>Document</title>
+</head>
+<body>
+    
+  <script>
+    const { Observable } = rxjs;
+
+    const observer1 = Observable.create((observer) => {
+      console.log("Observable 1 iniciado");
+      let i = 1;
+
+      const interval = setInterval(() => observer.next(i++), 1000);
+
+      //Quando emite o .complete, irá cair no 3° Callback que indica que foi completado
+      // setTimeout(() => observer.complete(), 5000); 
+
+      //Obs: Quando o erro é emitido o complete não é chamado
+      setTimeout(() => observer.error(new Error('Algo deu errado')), 5000); 
+
+      return () => clearInterval(interval);
+    });
+
+    const observer2 = Observable.create((observer) => {
+      console.log("Observable 2 iniciado");
+      let i = 1;
+      const interval = setInterval(() => observer.next(i++), 1000);
+      setTimeout(() => observer.error(new Error('Algo deu errado')), 5000); 
+      return () => clearInterval(interval);
+    });
+
+    //O .subscribe retorna um subscription, então pode ser usada para se desinscrever do canal
+    const subscription1 = observer1.subscribe({
+      next: num => console.log('1° Callback -> Parametro vindo do observable 1', num),
+      error: err => console.log('2° Callback -> Erro', err),
+      complete: () => console.log('3° Callback -> Completado')
+    }); //Pode funcionar também como um objeto literal, funciona da mesma forma
+
+    const subscription2 = observer2.subscribe({
+      next: num => console.log('1° Callback -> Parametro vindo do observable 1', num),
+      error: err => console.log('2° Callback -> Erro', err),
+      complete: () => console.log('3° Callback -> Completado')
+    });
+
+    //Cadeia de inscricoes
+    subscription1.add(subscription2); //Adiciona na cadeia
+    subscription1.remove(subscription2); //Remove da cadeia
+
+    //Ao chamar se desinscrever na subscription1 se desinscreve nas 2 devido a cadeia de inscricoes
+    setTimeout(() => subscription1.unsubscribe(), 3000);
+
+  </script>
+
+</body>
+</html>
