@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://unpkg.com/@reactivex/rxjs@6.3.3/dist/global/rxjs.umd.js"></script>
+    <title>Document</title>
+</head>
+<body>
+    
+    <script>
+        const { Observable } = rxjs;
+        const { share } = rxjs.operators;
+        //Promises tem a execucao imeditada, entao antes mesmo do .then esse bloco de codigo eh executado (Eager)
+        const promise = new Promise((resolve) => {
+            console.log('Iniciando a promise');
+            setTimeout(() => resolve(1), 3000);
+            //dar um resolve(2) nao resultaria em nada pois so emitem um unico valor
+        })
+
+        //Obersevables tem a execucao sob demanda, entao so esse bloco so sera executado apos o .subscribe (Lazy)
+        const observer = Observable.create((observer) => {
+            console.log('Iniciando o observable');
+            setTimeout(() => observer.next(1), 3000);
+            //dar um obverser.next(2) resultaria em um proximo valor, pois emitem multiplos valores
+        }).pipe(
+            share() //Com essa funcao share, o estado do obversevable vira compartilhado
+        )
+
+        promise.then(num => console.log('Promise ', num));
+        observer.subscribe(num => console.log('Observable ', num));
+
+        setTimeout(() => {
+            promise.then(num => console.log('Promise ', num));
+            observer.subscribe(num => console.log('Observable ', num));
+        }, 2000);
+
+        //As promises resolve aparecerao ao mesmo tempo no console, pois a Promise tem o estado compartilhado (eh multicast), todas as vezes q executar 
+        //o .then ira imediatamente receber o valor resolvido pois a promise so executa uma vez o bloco de codigo
+        //Ja os observer dara um subscribe depois o outro, poise tem o estado compartilhado ou nao compartilhado, nesse caso utiliza o unicast
+
+
+        //Exemplo de cancelar um subscribe para evitar memory leaking:
+        // const observer = Observable.create((observer) => {
+        //     let i = 0;
+        //     const interval = setInterval(() => {
+        //         console.log('aki', i);
+        //         observer.next(i++);
+        //     }, 1000);
+
+        //     return () => clearInterval(interval); //Ao dar unsubscribe essa funcao eh chamada
+        // })
+
+        // const subscriber = observer.subscribe((num) => console.log('Observable ', num));
+
+        // setTimeout(() => {
+        //     subscriber.unsubscribe();
+        // }, 5000)
+
+    </script>
+
+</body>
+</html>
