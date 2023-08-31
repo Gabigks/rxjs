@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="https://unpkg.com/@reactivex/rxjs@6.3.3/dist/global/rxjs.umd.js"></script>
+  <title>Document</title>
+</head>
+<body>
+    
+  <script>
+    const { Subject, Observable } = rxjs;
+
+    //Subjects são observables e também observers
+    const sub = new Subject();
+
+    const observable = Observable.create((observer) => {
+      observer.next(1);
+      observer.next(2);
+      observer.next(3);
+      observer.next(4);
+      observer.next(5);
+    });
+
+    //O subject pode ter mais de uma inscricicao devido a ser por padrao multicast
+    const subscription1 = sub.subscribe({
+      next: num => console.log('1° Callback -> Parametro vindo do observable 1', num),
+      error: err => console.log('2° Callback -> Erro', err),
+      complete: () => console.log('3° Callback -> Completado')
+    }); 
+
+    //Podemos passar para um subscribe por ter o padrao de um observable
+    const subscription2 = observable.subscribe(sub);
+
+    // //Devido a serem observers podemos emitir dados do lado de fora
+    // sub.next(1);
+    // sub.next(2); 
+    // sub.next(3);
+    // sub.error(new Error("Erro")); //Da tambem para emitir erro
+    // sub.complete(); //Da tambem para emitir complete
+
+
+  </script>
+
+</body>
+</html>

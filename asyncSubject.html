@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="https://unpkg.com/@reactivex/rxjs@6.3.3/dist/global/rxjs.umd.js"></script>
+  <title>Document</title>
+</head>
+<body>
+    
+  <script>
+    const { AsyncSubject, Observable } = rxjs;
+
+    const sub = new AsyncSubject();
+
+    sub.next(1);
+    sub.next(2);
+    sub.next(3);
+    sub.next(4);
+
+    sub.subscribe({
+      next: num => console.log('1° Callback -> Parametro vindo do observable 1', num),
+      error: err => console.log('2° Callback -> Erro', err),
+      complete: () => console.log('3° Callback -> Completado')
+    });
+    
+    sub.next(5);
+    sub.next(6); //Apenas o ultimo valor sera passado
+    
+    sub.complete(); //Só passa valor apos o complete
+
+    setTimeout(() => {
+      sub.subscribe({
+        next: num => console.log('1° Callback -> Parametro vindo do observable 2', num),
+        error: err => console.log('2° Callback -> Erro', err),
+        complete: () => console.log('3° Callback -> Completado')
+      }); 
+    }, 500);
+
+
+  </script>
+
+</body>
+</html>

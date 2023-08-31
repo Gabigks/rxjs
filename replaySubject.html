@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="https://unpkg.com/@reactivex/rxjs@6.3.3/dist/global/rxjs.umd.js"></script>
+  <title>Document</title>
+</head>
+<body>
+    
+  <script>
+    const { ReplaySubject, Observable } = rxjs;
+
+    //Armazena uma qtd definida de valores emitidos
+    //O primeiro argumento passado no construtor sera qnts valores emitidos ele ira propagar para quem se inscrever
+    //O segundo argumento eh um tempo em ms que ele ira armazenar essa informacao
+    const sub = new ReplaySubject(4, 500);
+
+    sub.next(1);
+    sub.next(2);
+    sub.next(3);
+    sub.next(4);
+
+    sub.subscribe({
+      next: num => console.log('1° Callback -> Parametro vindo do observable 1', num),
+      error: err => console.log('2° Callback -> Erro', err),
+      complete: () => console.log('3° Callback -> Completado')
+    });
+    
+    sub.next(5);
+    sub.next(6);
+
+    setTimeout(() => {
+      sub.subscribe({
+        next: num => console.log('1° Callback -> Parametro vindo do observable 2', num),
+        error: err => console.log('2° Callback -> Erro', err),
+        complete: () => console.log('3° Callback -> Completado')
+      }); 
+    }, 500); //Nenhum valor sera capturado para essa inscrição, pelo tempo de casting
+
+
+  </script>
+
+</body>
+</html>

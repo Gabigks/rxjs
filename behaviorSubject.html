@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="https://unpkg.com/@reactivex/rxjs@6.3.3/dist/global/rxjs.umd.js"></script>
+  <title>Document</title>
+</head>
+<body>
+    
+  <script>
+    const { BehaviorSubject, Observable } = rxjs;
+
+    //Inicia com um valor padrão que os subscribes recebem ao serem chamados
+    const sub = new BehaviorSubject(0);
+
+    sub.next(1);
+    sub.next(2);
+    sub.next(3);
+    sub.next(4); //Ira passar esse valor, pois ele se comporta salvando na memoria o ultimo valor emitido
+
+    //Esse primeiro subscribe recebe o valor 4 primeiramente, pois é o ultimo valor emitido
+    //Porem posteriormente ao emitir mais valores, por ele ja estar inscrito, ele ira receber esses valores emitidos
+    sub.subscribe({
+      next: num => console.log('1° Callback -> Parametro vindo do observable 1', num),
+      error: err => console.log('2° Callback -> Erro', err),
+      complete: () => console.log('3° Callback -> Completado')
+    });
+    
+    sub.next(5);
+    sub.next(6);
+
+    //Esse subscribe ira receber somente o ultimo valor emitido 6
+    sub.subscribe({
+      next: num => console.log('1° Callback -> Parametro vindo do observable 2', num),
+      error: err => console.log('2° Callback -> Erro', err),
+      complete: () => console.log('3° Callback -> Completado')
+    });  
+
+
+  </script>
+
+</body>
+</html>
