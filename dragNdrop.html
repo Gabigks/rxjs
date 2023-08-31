@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script src="https://unpkg.com/@reactivex/rxjs@6.3.3/dist/global/rxjs.umd.js"></script>
+
+    <title>Document</title>
+
+    <style>
+      .card {
+        width: 300px;
+        height: 300px;
+        background-color: grey;
+        border: solid 1px darkslategrey;
+        cursor: move;
+        position: absolute;
+        box-shadow: darkslategrey 1px 1px 25px;
+      }
+    </style>
+  </head>
+  <body>
+
+    <div class="card"></div>
+
+    <script>
+      const { fromEvent, merge } = rxjs; 
+      const { switchMap, takeUntil, map, delay, filter, tap, skip } = rxjs.operators; 
+
+      const card = document.querySelector('.card');
+
+      //$ no final é uma convenção para dizer q é um observable
+      const mouseDown$ = fromEvent(card, 'mousedown');
+      const mouseUp$ = fromEvent(document, 'mouseup');
+      const mouseMove$ = fromEvent(document, 'mousemove');
+
+      const keyUp$ = fromEvent(document, 'keyup');
+
+      const dragAndDrop$ = mouseDown$.pipe(
+        map(e => ({ //Recebe um valor e transforma em outra coisa igual o map do js 
+          x: e.clientX,
+          y: e.clientY,
+          target: {
+            x: e.target.offsetLeft,
+            y: e.target.offsetTop
+          }
+        })), 
+        switchMap(start => 
+          merge(
+            mouseMove$.pipe(
+            map(e => ({
+              x: e.clientX - start.x + start.target.x,
+              y: e.clientY - start.y + start.target.y
+            })),
+            takeUntil(mouseUp$) //Até que
+            ),
+            keyUp$.pipe(
+              filter(e => e.which == 32), //Espaco
+              tap(tecla => {
+                document.body.insertBefore(card.cloneNode(true), card)
+              }),
+              skip() //Ignora todas emissoess
+            )
+          ) //Cada vez que uma nova emissao acontecer e eu precisar trocar por um observable, o observable anterior vai ser desinscrito, sempre a ultima inscrição sera aceita
+        )
+      );
+      
+      dragAndDrop$.pipe(
+        delay(100)
+      ).subscribe(
+        val => {
+          card.style.top = `${val.y}px`;
+          card.style.left = `${val.x}px`;
+        }
+      );
+
+    </script>
+
+  </body>
+</html>
