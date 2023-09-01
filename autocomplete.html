@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="https://unpkg.com/@reactivex/rxjs@6.3.3/dist/global/rxjs.umd.js"></script>
+  <title>Document</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-4bw+/aepP/YC94hEpVNVgiZdgIC5+VKNBQNGCHeKRQN+PtmoHDEXuppvnDJzQIu9" crossorigin="anonymous">
+
+  <style>
+    body {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+      background: orange;
+    }
+
+    input[type="text"] {
+      width: 100%; /* Make the input take 100% width of its parent */
+      padding: 10px; /* Adjust the padding for better appearance */
+      box-sizing: border-box; /* Include padding in the width */
+    }
+
+    .content{
+      box-shadow: 0 0 10px black;
+      max-height: 50%;
+      overflow: auto;
+    }
+
+    ul{
+      list-style: none;
+      padding: 0;
+    }
+
+  </style>
+
+</head>
+<body>
+
+  <div class="content">
+    <input type="text" placeholder="Pais..." />
+    <ul></ul>
+  </div>
+
+  <script>
+
+    const { fromEvent, ajax: {ajax}, of } = rxjs;
+    const { pluck, map, debounceTime, switchMap, catchError, distinctUntilChanged, startWith } = rxjs.operators;
+
+    const input = fromEvent(document.querySelector("input"), 'input');
+    const ul = document.querySelector('ul');
+
+    const mostraResultado = res => {
+      ul.innerHTML = res.map(e => `<li>${e}</li>`).join('');
+    }
+
+    //Solicita uma requisição nessa api, então extrai a propriedade responde atraves do pluck
+    //então faz um map com o array de objetos para virar apenas um array de strings com os nomes dos paises
+    const buscaPaisesNaApi = termo => ajax(`https://restcountries.com/v3.1/name/${termo}?fullText=false`).pipe(
+      pluck('response'), //Pega um objeto e extrai uma propriedade dele
+      map(resposta => resposta.map(e => e.name.common))
+    )
+
+    input.pipe(
+      debounceTime(300),
+      pluck('target', 'value'), //Pega a propriedade targe e dentro da target a propriedade value, que é oq o usuario vai escrever no input
+      map(e => e.trim()),
+      distinctUntilChanged(),
+      switchMap(termo => {
+        if(!termo || termo.length < 3) return of([]); //Usar o of pois ele nao modifica a estrutura e retornara de fato o array vazio
+        return buscaPaisesNaApi(termo);
+      }), //Se inscreve em um novo observable e ignora o anterior
+      catchError((err, source) => {
+        console.log(err);
+        return source.pipe(
+          startWith([])
+        );
+      })
+      )
+    .subscribe(mostraResultado);
+  </script>
+  
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/js/bootstrap.bundle.min.js" integrity="sha384-HwwvtgBNo3bZJJLYd8oVXjrBZt8cqVSpeBNS5n7C8IVInixGAoxmnlMuBnhbgrkm" crossorigin="anonymous"></script>
+</body>
+</html>
