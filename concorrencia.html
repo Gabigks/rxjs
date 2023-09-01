@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script src="https://unpkg.com/@reactivex/rxjs@6.3.3/dist/global/rxjs.umd.js"></script>
+
+    <title>Document</title>
+
+    <style>
+
+    </style>
+  </head>
+  <body>
+
+    <script>
+      const { of, ajax: {ajax} } = rxjs; 
+      const { mergeMap, concatMap, switchMap, exhaustMap, map, combineAll } = rxjs.operators; 
+
+      //O ajax é lazy, entao so sera executado apos um subscribe
+      const api = (response, delay) => ajax({
+        url: `http://localhost:5200/response/${JSON.stringify(response)}/delay/${delay}/`
+      });
+
+      const a = api({ data: "A" }, 2000);
+      const b = api({ data: "B" }, 1000);
+      const c = api({ data: "C" }, 800);
+      const d = api({ data: "D" }, 1800);
+      const e = api({ data: "E" }, 1200);
+      const f = api({ data: "F" }, 700);
+
+      //Se usar mergeMap, as requisições iram acontecer em paralelo, podemos passar uma segunda propriedade, que limita
+      //a qtd de requisicoes que ele fara em paralelo
+      //Se usar concatMap, ela só faz uma nova requisição após terminar a anterior
+      //Se usar switchMap, ele cancela a ultima requisição e segue pra proxima,
+      //nessa caso ira cancelar todas requisições e só ira executar o f
+      //Se usar exhaustMap, ela mantém só a primeira requisição e nem se inscreve nas outras, nesse caso como estamos
+      //fazendo as requisicoes em parelo, apenas a primeira ira se inscrever
+      of(a, b, c, d, e, f)
+        .pipe(
+          mergeMap(e => e, 3), //Como uma Promise com um .then em cada, executa todos em paralelo, utilizar o delay para fazer a ordem q quiser
+          map(x => x?.response?.data), //Opção para pegar propriedade, igual 'pluck' que foi descontinuado
+          combineAll() // Vai juntar todas as respostas em um unico array, ai entao ira dar o complete
+        )
+        .subscribe(
+          x => console.log(x),
+          err => console.log(err),
+          () => console.log('Complete')
+        )
+
+    </script>
+
+  </body>
+</html>
