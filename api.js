@@ -14,7 +14,8 @@ http.createServer((req, res) => {
   const jsonResponse = JSON.parse(decodeURIComponent(response));
 
   setTimeout(() => {
-    res.write(jsonResponse);
+    const jsonString = JSON.stringify(jsonResponse);
+    res.write(jsonString);
     res.end();
   }, +delay)
 }).listen(5200);
